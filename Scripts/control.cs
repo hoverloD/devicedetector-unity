@@ -20,9 +20,17 @@ public class control: MonoBehaviour
     AROcclusionManager m_occlusionManager;
 
     public GameObject Sphere;
+    public GameObject StartPoint;
+    public GameObject TextCamera;
+    public GameObject TextPlug;
+    public GameObject TextDoorbell;
+    public GameObject SphereCamera;
+    public GameObject SpherePlug;
+    public GameObject SphereDoorbell;
     public GameObject dummy; // navi模型的轴向不对，嵌套了一个空对象方便对轴。。
     public Vector3 aim; // 要指向的目标，upload里调用
-    // public GameObject TypeText;
+    // 目前这样其实不用分类，文字放一起，全部朝向摄像头就行了
+    public GameObject[] cameras, doorbells, plugs;
 
     [Serializable]
     public class Loc
@@ -87,14 +95,21 @@ public class control: MonoBehaviour
         Log("发现新的IoT设备：" + $"{device.mac}" + " " + $"{device.type}" + " " + $"{device.x}" + " " + $"{device.y}" + " " + $"{device.z}");
         
         // https://blog.csdn.net/weixin_43913272/article/details/90246161
-        Instantiate(Sphere, new Vector3(device.x, device.y, device.z), Quaternion.identity);
-
-        // GameObject textInstance = Instantiate(TypeText);
-        // // 获取 TextMeshProUGUI 组件
-        // TextMeshProUGUI textComponent = textInstance.GetComponent<TextMeshProUGUI>();
-        // // 设置文本内容和位置
-        // textComponent.text = device.type;
-        // textInstance.transform.position = new Vector3(device.x, device.y + (float)0.15, device.z);
+        if(device.type == "plug") {
+            Instantiate(SpherePlug, new Vector3(device.x, device.y, device.z), Quaternion.identity);
+            Instantiate(TextPlug, new Vector3(device.x, device.y + (float)0.08, device.z), Quaternion.identity);
+            plugs = GameObject.FindGameObjectsWithTag("plugs");
+        } else if(device.type == "camera" || device.type == "scamera") {
+            Instantiate(SphereCamera, new Vector3(device.x, device.y, device.z), Quaternion.identity);
+            Instantiate(TextCamera, new Vector3(device.x, device.y + (float)0.08, device.z), Quaternion.identity);
+            cameras = GameObject.FindGameObjectsWithTag("cameras");
+        } else if(device.type == "doorbell") {
+            Instantiate(SphereDoorbell, new Vector3(device.x, device.y, device.z), Quaternion.identity);
+            Instantiate(TextDoorbell, new Vector3(device.x, device.y + (float)0.08, device.z), Quaternion.identity);
+            doorbells = GameObject.FindGameObjectsWithTag("doorbells");
+        } else {
+            Instantiate(Sphere, new Vector3(device.x, device.y, device.z), Quaternion.identity);
+        }
     }
 
     // 修改Aimer，这样navi指向就变了
@@ -110,6 +125,7 @@ public class control: MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Instantiate(StartPoint, new Vector3(0, 0, 0), Quaternion.identity);
         // Locator("{ \"mac\":\"ff:ff:ff:ff:ff:ff\", \"type\": \"camera\", \"x\": 0.1541, \"y\": 0, \"z\": -0.1541 }");
         // Locator("{ \"mac\":\"ff:ff:ff:ff:ff:ff\", \"type\": \"camera\", \"x\": -0.1541, \"y\": 0, \"z\": -0.1541 }");
         m_occlusionManager = (Camera.main).GetComponent<AROcclusionManager>();
@@ -127,7 +143,7 @@ public class control: MonoBehaviour
         }
     }
 
-
+ 
     // Update is called once per frame
     void Update()
     {
@@ -143,6 +159,16 @@ public class control: MonoBehaviour
         // Vector3 direction = aim - dummy.transform.position;
         // dummy.transform.rotation = Quaternion.LookRotation(direction);
 
+        foreach(var cc in cameras) {
+            cc.transform.LookAt(curPos);
+        }
+        foreach(var pp in plugs) {
+            pp.transform.LookAt(curPos);
+        }
+        foreach(var dd in doorbells) {
+            dd.transform.LookAt(curPos);
+        }
+
         var loc = new Loc {
             timestamp = (DateTime.Now.ToUniversalTime().Ticks - 621355968000000000) / 10000,
             x = curPos.x.ToString("F3"),
@@ -152,7 +178,7 @@ public class control: MonoBehaviour
         string locStr = JsonUtility.ToJson(loc);
 
         Loc loc2 = JsonUtility.FromJson<Loc>(locStr);
-        LocLog("当前坐标(camera)：" + " " + loc2.x + ", " + loc2.y + ", " + loc2.z);
+        LocLog("当前坐标：" + " " + loc2.x + ", " + loc2.y + ", " + loc2.z);
 
         SendVIO(locStr);
     }
