@@ -27,7 +27,7 @@ public class control: MonoBehaviour
     public GameObject SphereCamera;
     public GameObject SpherePlug;
     public GameObject SphereDoorbell;
-    public GameObject dummy; // navi模型的轴向不对，嵌套了一个空对象方便对轴。。
+    public GameObject dummy;
     public Vector3 aim; // 要指向的目标，upload里调用
     // 目前这样其实不用分类，文字放一起，全部朝向摄像头就行了
     public GameObject[] cameras, doorbells, plugs;
@@ -91,7 +91,6 @@ public class control: MonoBehaviour
     {
         Log(str);
         Device device = JsonUtility.FromJson<Device>(str);
-        // TODO 根据type，套不同模型。点击能显示文本么？或者模型上能体现种类
         Log("发现新的IoT设备：" + $"{device.mac}" + " " + $"{device.type}" + " " + $"{device.x}" + " " + $"{device.y}" + " " + $"{device.z}");
         
         // https://blog.csdn.net/weixin_43913272/article/details/90246161
@@ -112,8 +111,7 @@ public class control: MonoBehaviour
         }
     }
 
-    // 修改Aimer，这样navi指向就变了
-    // 偷懒，直接用Device了
+    // 修改Aimer，即navi指向
     public void Aimer(string str)
     {
         Log(str);
